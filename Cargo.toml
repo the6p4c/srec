@@ -1,0 +1,7 @@
+[package]
+name = "srec"
+version = "0.1.0"
+authors = ["The6P4C <watsonjcampbell@gmail.com>"]
+edition = "2018"
+
+[dependencies]
