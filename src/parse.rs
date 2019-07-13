@@ -217,6 +217,13 @@ impl FromStr for ParsedRecord {
     }
 }
 
+fn read_records<'a>(s: &'a str) -> impl Iterator<Item = Result<ParsedRecord, Error>> + 'a {
+    s.lines()
+        .map(|line| line.trim())
+        .filter(|line| !line.is_empty())
+        .map(|line| line.parse::<ParsedRecord>())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -632,5 +639,88 @@ mod tests {
         let s = "S401FE";
 
         let _r = s.parse::<ParsedRecord>();
+    }
+
+    #[test]
+    fn read_records_empty_string_returns_empty_iterator() {
+        let s = "";
+
+        let mut ri = read_records(s);
+
+        assert_eq!(ri.next(), None);
+    }
+
+    #[test]
+    fn read_records_one_line_returns_iterator_with_one_item() {
+        let s = "S00600004844521B";
+
+        let mut ri = read_records(s);
+
+        assert_eq!(
+            ri.next(),
+            Some(Ok(ParsedRecord {
+                record: Record::S0("HDR".to_string()),
+                checksum_valid: true,
+            }))
+        );
+        assert_eq!(ri.next(), None);
+    }
+
+    #[test]
+    fn read_records_one_line_with_trailing_newline_returns_iterator_with_one_item() {
+        let s = "S00600004844521B\n";
+
+        let mut ri = read_records(s);
+
+        assert_eq!(
+            ri.next(),
+            Some(Ok(ParsedRecord {
+                record: Record::S0("HDR".to_string()),
+                checksum_valid: true,
+            }))
+        );
+        assert_eq!(ri.next(), None);
+    }
+
+    #[test]
+    fn read_records_one_line_with_empty_line_returns_iterator_with_one_item() {
+        let s = "S00600004844521B\n\n";
+
+        let mut ri = read_records(s);
+
+        assert_eq!(
+            ri.next(),
+            Some(Ok(ParsedRecord {
+                record: Record::S0("HDR".to_string()),
+                checksum_valid: true,
+            }))
+        );
+        assert_eq!(ri.next(), None);
+    }
+
+    #[test]
+    fn read_records_multiple_lines_returns_iterator_containing_all() {
+        let s = "S00600004844521B\nS107123400010203AC";
+
+        let mut ri = read_records(s);
+
+        assert_eq!(
+            ri.next(),
+            Some(Ok(ParsedRecord {
+                record: Record::S0("HDR".to_string()),
+                checksum_valid: true,
+            }))
+        );
+        assert_eq!(
+            ri.next(),
+            Some(Ok(ParsedRecord {
+                record: Record::S1(Data {
+                    address: Address16(0x1234),
+                    data: vec![0x00, 0x01, 0x02, 0x03],
+                }),
+                checksum_valid: true,
+            }))
+        );
+        assert_eq!(ri.next(), None);
     }
 }
