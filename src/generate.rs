@@ -1,5 +1,7 @@
 //! Generation of SREC records and files
-use super::{checksum, Address, Address16, Address24, Address32, Count16, Count24, Data, Record};
+use super::{
+    checksum_of, Address, Address16, Address24, Address32, Count16, Count24, Data, Record,
+};
 
 fn make_record(t: u8, address: &impl Address, data: &Vec<u8>) -> String {
     assert!(t < 10);
@@ -15,7 +17,7 @@ fn make_record(t: u8, address: &impl Address, data: &Vec<u8>) -> String {
         .collect::<Vec<_>>()
         .join("");
 
-    format!("S{}{}{:02X}", t, bytes_str, checksum(bytes))
+    format!("S{}{}{:02X}", t, bytes_str, checksum_of(&bytes))
 }
 
 impl Record {
