@@ -4,6 +4,7 @@
 use std::num::Wrapping;
 
 pub mod generate;
+pub mod parse;
 
 trait Address {
     fn to_be_bytes(&self) -> Vec<u8>;
