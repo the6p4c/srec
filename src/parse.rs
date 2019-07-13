@@ -102,6 +102,7 @@ impl FromStr for ParsedRecord {
             0 => Record::S0(
                 str::from_utf8(&rr.bytes[2..])
                     .expect("Invalid UTF-8 bytes in S0 data")
+                    .trim_end_matches('\0')
                     .to_string(),
             ),
             1 => {
@@ -366,6 +367,21 @@ mod tests {
     #[test]
     fn s0_simple_string_from_str_returns_correct_parsed_record() {
         let s = "S00600004844521B";
+
+        let r = s.parse::<ParsedRecord>().unwrap();
+
+        assert_eq!(
+            r,
+            ParsedRecord {
+                record: Record::S0("HDR".to_string()),
+                checksum_valid: true,
+            }
+        );
+    }
+
+    #[test]
+    fn s0_null_terminated_string_from_str_returns_correct_parsed_record() {
+        let s = "S009000048445200000018";
 
         let r = s.parse::<ParsedRecord>().unwrap();
 
