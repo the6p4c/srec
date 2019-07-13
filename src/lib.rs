@@ -9,6 +9,7 @@ trait Address {
     fn to_be_bytes(&self) -> Vec<u8>;
 }
 
+#[derive(Debug, PartialEq)]
 struct Address16(u16);
 
 impl Address for Address16 {
@@ -18,6 +19,7 @@ impl Address for Address16 {
 }
 
 // TODO: Restrict the value to 24 bits
+#[derive(Debug, PartialEq)]
 struct Address24(u32);
 
 impl Address for Address24 {
@@ -26,6 +28,7 @@ impl Address for Address24 {
     }
 }
 
+#[derive(Debug, PartialEq)]
 struct Address32(u32);
 
 impl Address for Address32 {
@@ -34,15 +37,20 @@ impl Address for Address32 {
     }
 }
 
+#[derive(Debug, PartialEq)]
 struct Count16(u16);
+
 // TODO: Restrict the value to 24 bits
+#[derive(Debug, PartialEq)]
 struct Count24(u32);
 
+#[derive(Debug, PartialEq)]
 struct Data<T> {
     address: T,
     data: Vec<u8>,
 }
 
+#[derive(Debug, PartialEq)]
 enum Record {
     S0(String),
     S1(Data<Address16>),
