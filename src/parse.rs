@@ -1,7 +1,7 @@
 //! Parsing of SREC records and files
+use crate::checksum::checksum_of;
+use crate::record::*;
 use std::str::{self, FromStr};
-
-use super::{checksum_of, Address16, Address24, Address32, Count16, Count24, Data, Record};
 
 #[derive(Debug, PartialEq)]
 struct RawRecord {
