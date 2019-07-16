@@ -1,20 +1,20 @@
 #[derive(Debug, PartialEq)]
-struct Block {
-    address: u32,
-    data: Vec<u8>,
+pub struct Block {
+    pub address: u32,
+    pub data: Vec<u8>,
 }
 
 #[derive(Debug, PartialEq)]
-struct Image {
-    blocks: Vec<Block>,
+pub struct Image {
+    pub blocks: Vec<Block>,
 }
 
 impl Image {
-    fn new() -> Image {
+    pub fn new() -> Image {
         Image { blocks: vec![] }
     }
 
-    fn add_data(&mut self, address: u32, data: &Vec<u8>) {
+    pub fn add_data(&mut self, address: u32, data: &Vec<u8>) {
         let new_block_range = address..(address + data.len() as u32);
 
         for block in &self.blocks {
