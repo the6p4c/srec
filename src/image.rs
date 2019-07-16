@@ -15,6 +15,22 @@ impl Image {
     }
 
     fn add_data(&mut self, address: u32, data: &Vec<u8>) {
+        let new_block_range = address..(address + data.len() as u32);
+
+        for block in &self.blocks {
+            let block_range = block.address..(block.address + block.data.len() as u32);
+
+            for addr in block_range {
+                if new_block_range.contains(&addr) {
+                    panic!(
+                        "New block (at {:#x}, length {:#x}) overlaps with existing block (at {:#x}, length {:#x})",
+                        address, data.len(),
+                        block.address, block.data.len()
+                    );
+                }
+            }
+        }
+
         self.blocks.push(Block {
             address: address,
             data: data.clone(),
@@ -169,5 +185,23 @@ mod tests {
                 data: vec![0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99]
             }]
         );
+    }
+
+    #[test]
+    #[should_panic]
+    fn add_data_overlapping_after_panics() {
+        let mut i = Image::new();
+
+        i.add_data(0x00000000, &vec![0x11, 0x22, 0x33, 0x44]);
+        i.add_data(0x00000003, &vec![0x55, 0x66, 0x77, 0x88]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn add_data_overlapping_before_panics() {
+        let mut i = Image::new();
+
+        i.add_data(0x00000003, &vec![0x55, 0x66, 0x77, 0x88]);
+        i.add_data(0x00000000, &vec![0x11, 0x22, 0x33, 0x44]);
     }
 }
