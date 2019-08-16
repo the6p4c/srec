@@ -3,6 +3,5 @@
 
 mod checksum;
 pub mod generate;
-mod image;
 pub mod parse;
 mod record;
