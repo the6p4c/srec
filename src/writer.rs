@@ -36,6 +36,18 @@ impl Record {
     }
 }
 
+fn write_records(records: &[Record]) -> String {
+    records
+        .iter()
+        .map(Record::encode)
+        .map(|s| {
+            let mut s2 = s.clone();
+            s2.push('\n');
+            s2
+        })
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -173,5 +185,46 @@ mod tests {
         let s = r.encode();
 
         assert_eq!(s, "S9031234B6");
+    }
+
+    #[test]
+    fn write_records_empty_list_returns_empty_string() {
+        let r = [];
+
+        let s = write_records(&r);
+
+        assert_eq!(s, "");
+    }
+
+    #[test]
+    fn write_records_one_record_returns_single_record_newline_terminated() {
+        let r = [Record::S0("HDR".to_string())];
+
+        let s = write_records(&r);
+
+        assert_eq!(s, "S00600004844521B\n");
+    }
+
+    #[test]
+    fn write_records_multiple_records_returns_all_records_joined_by_newline() {
+        let r = [
+            Record::S0("HDR".to_string()),
+            Record::S1(Data {
+                address: Address16(0x1234),
+                data: vec![0x00, 0x01, 0x02, 0x03],
+            }),
+            Record::S1(Data {
+                address: Address16(0x1238),
+                data: vec![0x04, 0x05, 0x06, 0x07],
+            }),
+            Record::S9(Address16(0x1234)),
+        ];
+
+        let s = write_records(&r);
+
+        assert_eq!(
+            s,
+            "S00600004844521B\nS107123400010203AC\nS10712380405060798\nS9031234B6\n"
+        );
     }
 }

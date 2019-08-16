@@ -2,6 +2,6 @@
 #![deny(missing_docs)]
 
 mod checksum;
-pub mod generate;
-pub mod parse;
+pub mod reader;
 mod record;
+pub mod writer;
