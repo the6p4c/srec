@@ -1,6 +1,6 @@
 use std::num::Wrapping;
 
-pub fn checksum_of(data: &Vec<u8>) -> u8 {
+pub fn checksum_of(data: &[u8]) -> u8 {
     !data.iter().map(|b| Wrapping(*b)).sum::<Wrapping<u8>>().0
 }
 

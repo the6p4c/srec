@@ -1,9 +1,8 @@
 //! Generation of SREC records and files
 use crate::checksum::checksum_of;
 use crate::record::*;
-use std::convert::TryInto;
 
-fn make_record(t: u8, address: &impl Address, data: &Vec<u8>) -> String {
+fn make_record(t: u8, address: &impl Address, data: &[u8]) -> String {
     assert!(t < 10);
 
     let mut bytes = vec![0x00];
@@ -27,11 +26,11 @@ impl Record {
             Record::S1(Data { address, data }) => make_record(1, address, data),
             Record::S2(Data { address, data }) => make_record(2, address, data),
             Record::S3(Data { address, data }) => make_record(3, address, data),
-            Record::S5(Count16(c)) => make_record(5, &Address16(*c), &vec![]),
-            Record::S6(Count24(c)) => make_record(6, &Address24(*c), &vec![]),
-            Record::S7(address) => make_record(7, address, &vec![]),
-            Record::S8(address) => make_record(8, address, &vec![]),
-            Record::S9(address) => make_record(9, address, &vec![]),
+            Record::S5(Count16(c)) => make_record(5, &Address16(*c), &[]),
+            Record::S6(Count24(c)) => make_record(6, &Address24(*c), &[]),
+            Record::S7(address) => make_record(7, address, &[]),
+            Record::S8(address) => make_record(8, address, &[]),
+            Record::S9(address) => make_record(9, address, &[]),
         }
     }
 }

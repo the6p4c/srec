@@ -18,6 +18,9 @@ enum Error {
     ByteCountZero,
 }
 
+// Using is_empty would ruin the consistency of checking if there are enough
+// characters between 1 and 2 required
+#[allow(clippy::len_zero)]
 fn raw_record_from_str(s: &str) -> Result<RawRecord, Error> {
     // Read initial "S" character
     if s.len() < 1 {
@@ -79,10 +82,10 @@ fn raw_record_from_str(s: &str) -> Result<RawRecord, Error> {
     let checksum_valid = checksum == checksum_of(&checksum_bytes);
 
     Ok(RawRecord {
-        t: t,
-        bytes: bytes,
-        checksum: checksum,
-        checksum_valid: checksum_valid,
+        t,
+        bytes,
+        checksum,
+        checksum_valid,
     })
 }
 
