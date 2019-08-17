@@ -7,15 +7,14 @@ use std::str::{self, FromStr};
 struct RawRecord {
     t: u8,
     bytes: Vec<u8>,
-    checksum: u8,
-    checksum_valid: bool,
 }
 
 #[derive(Debug, PartialEq)]
-enum Error {
+pub enum Error {
     NotEnoughData,
     UnexpectedCharacter,
     ByteCountZero,
+    ChecksumMismatch,
 }
 
 // Using is_empty would ruin the consistency of checking if there are enough
@@ -81,21 +80,14 @@ fn raw_record_from_str(s: &str) -> Result<RawRecord, Error> {
     checksum_bytes.extend(&bytes);
     let checksum_valid = checksum == checksum_of(&checksum_bytes);
 
-    Ok(RawRecord {
-        t,
-        bytes,
-        checksum,
-        checksum_valid,
-    })
+    if checksum_valid {
+        Ok(RawRecord { t, bytes })
+    } else {
+        Err(Error::ChecksumMismatch)
+    }
 }
 
-#[derive(Debug, PartialEq)]
-struct ParsedRecord {
-    record: Record,
-    checksum_valid: bool,
-}
-
-impl FromStr for ParsedRecord {
+impl FromStr for Record {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -211,21 +203,18 @@ impl FromStr for ParsedRecord {
 
                 Record::S9(Address16(address))
             }
-            t => panic!("Unknown record type {}", t),
+            _ => return Err(Error::UnexpectedCharacter),
         };
 
-        Ok(ParsedRecord {
-            record: r,
-            checksum_valid: rr.checksum_valid,
-        })
+        Ok(r)
     }
 }
 
-fn read_records<'a>(s: &'a str) -> impl Iterator<Item = Result<ParsedRecord, Error>> + 'a {
+fn read_records<'a>(s: &'a str) -> impl Iterator<Item = Result<Record, Error>> + 'a {
     s.lines()
         .map(|line| line.trim())
         .filter(|line| !line.is_empty())
-        .map(|line| line.parse::<ParsedRecord>())
+        .map(|line| line.parse::<Record>())
 }
 
 #[cfg(test)]
@@ -305,9 +294,7 @@ mod tests {
             rr,
             Ok(RawRecord {
                 t: 1,
-                bytes: vec![],
-                checksum: 0xfe,
-                checksum_valid: true,
+                bytes: vec![]
             })
         );
     }
@@ -326,8 +313,6 @@ mod tests {
                     0x12, 0x34, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
                     0x0b, 0x0c
                 ],
-                checksum: 0x5b,
-                checksum_valid: true,
             })
         );
     }
@@ -338,98 +323,63 @@ mod tests {
 
         let rr = raw_record_from_str(s);
 
-        assert_eq!(
-            rr,
-            Ok(RawRecord {
-                t: 1,
-                bytes: vec![
-                    0x12, 0x34, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
-                    0x0b, 0x0c
-                ],
-                checksum: 0xff,
-                checksum_valid: false,
-            })
-        );
+        assert_eq!(rr, Err(Error::ChecksumMismatch));
     }
 
     #[test]
-    fn s0_empty_string_from_str_returns_correct_parsed_record() {
+    fn s0_empty_string_from_str_returns_correct_record() {
         let s = "S0030000FC";
 
-        let r = s.parse::<ParsedRecord>().unwrap();
+        let r = s.parse::<Record>();
 
-        assert_eq!(
-            r,
-            ParsedRecord {
-                record: Record::S0("".to_string()),
-                checksum_valid: true,
-            }
-        );
+        assert_eq!(r, Ok(Record::S0("".to_string())));
     }
 
     #[test]
-    fn s0_simple_string_from_str_returns_correct_parsed_record() {
+    fn s0_simple_string_from_str_returns_correct_record() {
         let s = "S00600004844521B";
 
-        let r = s.parse::<ParsedRecord>().unwrap();
+        let r = s.parse::<Record>();
 
-        assert_eq!(
-            r,
-            ParsedRecord {
-                record: Record::S0("HDR".to_string()),
-                checksum_valid: true,
-            }
-        );
+        assert_eq!(r, Ok(Record::S0("HDR".to_string())));
     }
 
     #[test]
-    fn s0_null_terminated_string_from_str_returns_correct_parsed_record() {
+    fn s0_null_terminated_string_from_str_returns_correct_record() {
         let s = "S009000048445200000018";
 
-        let r = s.parse::<ParsedRecord>().unwrap();
+        let r = s.parse::<Record>();
 
-        assert_eq!(
-            r,
-            ParsedRecord {
-                record: Record::S0("HDR".to_string()),
-                checksum_valid: true,
-            }
-        );
+        assert_eq!(r, Ok(Record::S0("HDR".to_string())));
     }
 
     #[test]
-    fn s1_empty_from_str_returns_correct_parsed_record() {
+    fn s1_empty_from_str_returns_correct_record() {
         let s = "S1031234B6";
 
-        let r = s.parse::<ParsedRecord>().unwrap();
+        let r = s.parse::<Record>();
 
         assert_eq!(
             r,
-            ParsedRecord {
-                record: Record::S1(Data {
-                    address: Address16(0x1234),
-                    data: vec![],
-                }),
-                checksum_valid: true,
-            }
+            Ok(Record::S1(Data {
+                address: Address16(0x1234),
+                data: vec![]
+            }))
         );
     }
 
     #[test]
-    fn s1_with_data_from_str_returns_correct_parsed_record() {
+    fn s1_with_data_from_str_returns_correct_record() {
         let s = "S107123400010203AC";
 
-        let r = s.parse::<ParsedRecord>().unwrap();
+        let r = s.parse::<Record>();
 
         assert_eq!(
             r,
-            ParsedRecord {
-                record: Record::S1(Data {
-                    address: Address16(0x1234),
-                    data: vec![0x00, 0x01, 0x02, 0x03],
-                }),
-                checksum_valid: true,
-            }
+            Ok(Record::S1(Data {
+                address: Address16(0x1234),
+                data: vec![0x00, 0x01, 0x02, 0x03]
+            }))
         );
     }
 
@@ -437,44 +387,38 @@ mod tests {
     fn s1_invalid_from_str_returns_err_not_enough_data() {
         let s = "S10212EB";
 
-        let r = s.parse::<ParsedRecord>();
+        let r = s.parse::<Record>();
 
         assert_eq!(r, Err(Error::NotEnoughData));
     }
 
     #[test]
-    fn s2_empty_from_str_returns_correct_parsed_record() {
+    fn s2_empty_from_str_returns_correct_record() {
         let s = "S2041234565F";
 
-        let r = s.parse::<ParsedRecord>().unwrap();
+        let r = s.parse::<Record>();
 
         assert_eq!(
             r,
-            ParsedRecord {
-                record: Record::S2(Data {
-                    address: Address24(0x123456),
-                    data: vec![],
-                }),
-                checksum_valid: true,
-            }
+            Ok(Record::S2(Data {
+                address: Address24(0x123456),
+                data: vec![]
+            }))
         );
     }
 
     #[test]
-    fn s2_with_data_from_str_returns_correct_parsed_record() {
+    fn s2_with_data_from_str_returns_correct_record() {
         let s = "S2081234560001020355";
 
-        let r = s.parse::<ParsedRecord>().unwrap();
+        let r = s.parse::<Record>();
 
         assert_eq!(
             r,
-            ParsedRecord {
-                record: Record::S2(Data {
-                    address: Address24(0x123456),
-                    data: vec![0x00, 0x01, 0x02, 0x03],
-                }),
-                checksum_valid: true,
-            }
+            Ok(Record::S2(Data {
+                address: Address24(0x123456),
+                data: vec![0x00, 0x01, 0x02, 0x03]
+            }))
         );
     }
 
@@ -482,44 +426,38 @@ mod tests {
     fn s2_invalid_from_str_returns_err_not_enough_data() {
         let s = "S2031234B6";
 
-        let r = s.parse::<ParsedRecord>();
+        let r = s.parse::<Record>();
 
         assert_eq!(r, Err(Error::NotEnoughData));
     }
 
     #[test]
-    fn s3_empty_from_str_returns_correct_parsed_record() {
+    fn s3_empty_from_str_returns_correct_record() {
         let s = "S30512345678E6";
 
-        let r = s.parse::<ParsedRecord>().unwrap();
+        let r = s.parse::<Record>();
 
         assert_eq!(
             r,
-            ParsedRecord {
-                record: Record::S3(Data {
-                    address: Address32(0x12345678),
-                    data: vec![],
-                }),
-                checksum_valid: true,
-            }
+            Ok(Record::S3(Data {
+                address: Address32(0x12345678),
+                data: vec![]
+            }))
         );
     }
 
     #[test]
-    fn s3_with_data_from_str_returns_correct_parsed_record() {
+    fn s3_with_data_from_str_returns_correct_record() {
         let s = "S3091234567800010203DC";
 
-        let r = s.parse::<ParsedRecord>().unwrap();
+        let r = s.parse::<Record>();
 
         assert_eq!(
             r,
-            ParsedRecord {
-                record: Record::S3(Data {
-                    address: Address32(0x12345678),
-                    data: vec![0x00, 0x01, 0x02, 0x03],
-                }),
-                checksum_valid: true,
-            }
+            Ok(Record::S3(Data {
+                address: Address32(0x12345678),
+                data: vec![0x00, 0x01, 0x02, 0x03]
+            }))
         );
     }
 
@@ -527,137 +465,108 @@ mod tests {
     fn s3_invalid_from_str_returns_err_not_enough_data() {
         let s = "S3041234565F";
 
-        let r = s.parse::<ParsedRecord>();
+        let r = s.parse::<Record>();
 
         assert_eq!(r, Err(Error::NotEnoughData));
     }
 
     #[test]
-    fn s5_returns_correct_parsed_record() {
+    fn s5_returns_correct_record() {
         let s = "S5031234B6";
 
-        let r = s.parse::<ParsedRecord>().unwrap();
+        let r = s.parse::<Record>();
 
-        assert_eq!(
-            r,
-            ParsedRecord {
-                record: Record::S5(Count16(0x1234)),
-                checksum_valid: true,
-            }
-        );
+        assert_eq!(r, Ok(Record::S5(Count16(0x1234))));
     }
 
     #[test]
     fn s5_invalid_from_str_returns_err_not_enough_data() {
         let s = "S50212EB";
 
-        let r = s.parse::<ParsedRecord>();
+        let r = s.parse::<Record>();
 
         assert_eq!(r, Err(Error::NotEnoughData));
     }
 
     #[test]
-    fn s6_returns_correct_parsed_record() {
+    fn s6_returns_correct_record() {
         let s = "S6041234565F";
 
-        let r = s.parse::<ParsedRecord>().unwrap();
+        let r = s.parse::<Record>();
 
-        assert_eq!(
-            r,
-            ParsedRecord {
-                record: Record::S6(Count24(0x123456)),
-                checksum_valid: true,
-            }
-        );
+        assert_eq!(r, Ok(Record::S6(Count24(0x123456))));
     }
 
     #[test]
     fn s6_invalid_from_str_returns_err_not_enough_data() {
         let s = "S6031234B6";
 
-        let r = s.parse::<ParsedRecord>();
+        let r = s.parse::<Record>();
 
         assert_eq!(r, Err(Error::NotEnoughData));
     }
 
     #[test]
-    fn s7_returns_correct_parsed_record() {
+    fn s7_returns_correct_record() {
         let s = "S70512345678E6";
 
-        let r = s.parse::<ParsedRecord>().unwrap();
+        let r = s.parse::<Record>();
 
-        assert_eq!(
-            r,
-            ParsedRecord {
-                record: Record::S7(Address32(0x12345678)),
-                checksum_valid: true,
-            }
-        );
+        assert_eq!(r, Ok(Record::S7(Address32(0x12345678))));
     }
 
     #[test]
     fn s7_invalid_from_str_returns_err_not_enough_data() {
         let s = "S7041234565F";
 
-        let r = s.parse::<ParsedRecord>();
+        let r = s.parse::<Record>();
 
         assert_eq!(r, Err(Error::NotEnoughData));
     }
 
     #[test]
-    fn s8_returns_correct_parsed_record() {
+    fn s8_returns_correct_record() {
         let s = "S8041234565F";
 
-        let r = s.parse::<ParsedRecord>().unwrap();
+        let r = s.parse::<Record>();
 
-        assert_eq!(
-            r,
-            ParsedRecord {
-                record: Record::S8(Address24(0x123456)),
-                checksum_valid: true,
-            }
-        );
+        assert_eq!(r, Ok(Record::S8(Address24(0x123456))));
     }
 
     #[test]
     fn s8_invalid_from_str_returns_err_not_enough_data() {
         let s = "S8031234B6";
 
-        let r = s.parse::<ParsedRecord>();
+        let r = s.parse::<Record>();
 
         assert_eq!(r, Err(Error::NotEnoughData));
     }
 
     #[test]
-    fn s9_returns_correct_parsed_record() {
+    fn s9_returns_correct_record() {
         let s = "S9031234B6";
 
-        let r = s.parse::<ParsedRecord>().unwrap();
+        let r = s.parse::<Record>();
 
-        assert_eq!(
-            r,
-            ParsedRecord {
-                record: Record::S9(Address16(0x1234)),
-                checksum_valid: true,
-            }
-        );
+        assert_eq!(r, Ok(Record::S9(Address16(0x1234))));
     }
 
     #[test]
     fn s9_invalid_from_str_returns_err_not_enough_data() {
         let s = "S90212EB";
 
-        let r = s.parse::<ParsedRecord>();
+        let r = s.parse::<Record>();
 
         assert_eq!(r, Err(Error::NotEnoughData));
     }
 
     #[test]
-    #[should_panic]
-    fn parsed_record_from_str_panics_on_unknown_type() {
+    fn record_from_str_returns_err_unexpected_character_on_unknown_type() {
         let s = "S401FE";
 
-        let _r = s.parse::<ParsedRecord>();
+        let r = s.parse::<Record>();
+
+        assert_eq!(r, Err(Error::UnexpectedCharacter));
     }
 
     #[test]
@@ -675,13 +584,7 @@ mod tests {
 
         let mut ri = read_records(s);
 
-        assert_eq!(
-            ri.next(),
-            Some(Ok(ParsedRecord {
-                record: Record::S0("HDR".to_string()),
-                checksum_valid: true,
-            }))
-        );
+        assert_eq!(ri.next(), Some(Ok(Record::S0("HDR".to_string()))));
         assert_eq!(ri.next(), None);
     }
 
@@ -691,13 +594,7 @@ mod tests {
 
         let mut ri = read_records(s);
 
-        assert_eq!(
-            ri.next(),
-            Some(Ok(ParsedRecord {
-                record: Record::S0("HDR".to_string()),
-                checksum_valid: true,
-            }))
-        );
+        assert_eq!(ri.next(), Some(Ok(Record::S0("HDR".to_string()))));
         assert_eq!(ri.next(), None);
     }
 
@@ -707,13 +604,7 @@ mod tests {
 
         let mut ri = read_records(s);
 
-        assert_eq!(
-            ri.next(),
-            Some(Ok(ParsedRecord {
-                record: Record::S0("HDR".to_string()),
-                checksum_valid: true,
-            }))
-        );
+        assert_eq!(ri.next(), Some(Ok(Record::S0("HDR".to_string()))));
         assert_eq!(ri.next(), None);
     }
 
@@ -723,22 +614,13 @@ mod tests {
 
         let mut ri = read_records(s);
 
+        assert_eq!(ri.next(), Some(Ok(Record::S0("HDR".to_string()))));
         assert_eq!(
             ri.next(),
-            Some(Ok(ParsedRecord {
-                record: Record::S0("HDR".to_string()),
-                checksum_valid: true,
-            }))
-        );
-        assert_eq!(
-            ri.next(),
-            Some(Ok(ParsedRecord {
-                record: Record::S1(Data {
-                    address: Address16(0x1234),
-                    data: vec![0x00, 0x01, 0x02, 0x03],
-                }),
-                checksum_valid: true,
-            }))
+            Some(Ok(Record::S1(Data {
+                address: Address16(0x1234),
+                data: vec![0x00, 0x01, 0x02, 0x03],
+            })))
         );
         assert_eq!(ri.next(), None);
     }
