@@ -35,7 +35,30 @@ impl Record {
     }
 }
 
-fn write_records(records: &[Record]) -> String {
+/// Generates a newline ("\n") terminated string from the records provided
+///
+/// Does not validate that the provided records do not overlap or are
+/// duplicated.
+///
+/// # Examples
+///
+/// ```rust
+/// let s = srec::writer::write_records(&[
+///     srec::Record::S0("HDR".to_string()),
+///     srec::Record::S1(srec::Data {
+///         address: srec::Address16(0x1234),
+///         data: vec![0x00, 0x01, 0x02, 0x03],
+///     }),
+///     srec::Record::S1(srec::Data {
+///         address: srec::Address16(0x1238),
+///         data: vec![0x04, 0x05, 0x06, 0x07],
+///     }),
+///     srec::Record::S9(srec::Address16(0x1234)),
+/// ]);
+///
+/// println!("{}", s);
+/// ```
+pub fn write_records(records: &[Record]) -> String {
     records
         .iter()
         .map(Record::encode)

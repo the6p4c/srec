@@ -1,7 +1,10 @@
+/// Allows conversion of an address into a vector of big-endian bytes
 pub trait Address {
+    /// Returns the bytes of the address value in big-endian
     fn to_be_bytes(&self) -> Vec<u8>;
 }
 
+/// 16-bit address
 #[derive(Debug, PartialEq)]
 pub struct Address16(pub u16);
 
@@ -12,6 +15,7 @@ impl Address for Address16 {
 }
 
 // TODO: Restrict the value to 24 bits
+/// 24-bit address
 #[derive(Debug, PartialEq)]
 pub struct Address24(pub u32);
 
@@ -21,6 +25,7 @@ impl Address for Address24 {
     }
 }
 
+/// 32-bit address
 #[derive(Debug, PartialEq)]
 pub struct Address32(pub u32);
 
@@ -30,30 +35,48 @@ impl Address for Address32 {
     }
 }
 
+/// 16-bit data record count
 #[derive(Debug, PartialEq)]
 pub struct Count16(pub u16);
 
 // TODO: Restrict the value to 24 bits
+/// 24-bit data record count
 #[derive(Debug, PartialEq)]
 pub struct Count24(pub u32);
 
+/// Record data field
 #[derive(Debug, PartialEq)]
 pub struct Data<T> {
+    /// Start address
     pub address: T,
+    /// Data bytes
     pub data: Vec<u8>,
 }
 
+/// An SRecord
+///
+/// See [Wikipedia](https://en.wikipedia.org/wiki/SREC_(file_format)#Record_types)
+/// for specific record usage information.
 #[derive(Debug, PartialEq)]
 pub enum Record {
+    /// Header
     S0(String),
+    /// Data with 16-bit address
     S1(Data<Address16>),
+    /// Data with 24-bit address
     S2(Data<Address24>),
+    /// Data with 32-bit address
     S3(Data<Address32>),
     // S4 - reserved
+    /// 16-bit data record count
     S5(Count16),
+    /// 24-bit data record count
     S6(Count24),
+    /// 32-bit start address
     S7(Address32),
+    /// 24-bit start address
     S8(Address24),
+    /// 16-bit start address
     S9(Address16),
 }
 

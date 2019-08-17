@@ -9,11 +9,16 @@ struct RawRecord {
     bytes: Vec<u8>,
 }
 
+/// Errors which may occur during reading
 #[derive(Debug, PartialEq)]
 pub enum Error {
+    /// String did not have enough characters
     NotEnoughData,
+    /// Next character was unexpected
     UnexpectedCharacter,
+    /// Record byte count field was zero (must be >= 1)
     ByteCountZero,
+    /// Record checksum did not match calculated checksum
     ChecksumMismatch,
 }
 
@@ -210,7 +215,24 @@ impl FromStr for Record {
     }
 }
 
-fn read_records<'a>(s: &'a str) -> impl Iterator<Item = Result<Record, Error>> + 'a {
+/// Reads records from a newline separated (either "\n" or "\r\n") string,
+/// returning an iterator over them
+///
+/// Does not validate file consistency as a whole - data records may overlap and
+/// start address records may be duplicated.
+///
+/// # Examples
+///
+/// ```rust
+/// let mut records = srec::reader::read_records(
+///     "S00600004844521B\nS107123400010203AC\nS10712380405060798\nS9031234B6\n"
+/// );
+///
+/// for record in records {
+///     println!("{:?}", record);
+/// }
+/// ```
+pub fn read_records<'a>(s: &'a str) -> impl Iterator<Item = Result<Record, Error>> + 'a {
     s.lines()
         .map(|line| line.trim())
         .filter(|line| !line.is_empty())
