@@ -1,6 +1,8 @@
 //! Parsing of SREC records and files
 use crate::checksum::checksum_of;
 use crate::record::*;
+use std::error;
+use std::fmt;
 use std::str::{self, FromStr};
 
 #[derive(Debug, PartialEq)]
@@ -20,6 +22,23 @@ pub enum Error {
     ByteCountZero,
     /// Record checksum did not match calculated checksum
     ChecksumMismatch,
+}
+
+impl error::Error for Error {}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Error::NotEnoughData => "not enough data",
+                Error::UnexpectedCharacter => "unexpected character",
+                Error::ByteCountZero => "byte count zero",
+                Error::ChecksumMismatch => "checksum mismatch",
+            }
+        )
+    }
 }
 
 // Using is_empty would ruin the consistency of checking if there are enough
