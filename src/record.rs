@@ -5,7 +5,7 @@ pub trait Address {
 }
 
 /// 16-bit address
-#[derive(Debug, Hash, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, PartialOrd, Eq, Ord)]
 pub struct Address16(pub u16);
 
 impl Address for Address16 {
@@ -16,7 +16,7 @@ impl Address for Address16 {
 
 // TODO: Restrict the value to 24 bits
 /// 24-bit address
-#[derive(Debug, Hash, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, PartialOrd, Eq, Ord)]
 pub struct Address24(pub u32);
 
 impl Address for Address24 {
@@ -26,7 +26,7 @@ impl Address for Address24 {
 }
 
 /// 32-bit address
-#[derive(Debug, Hash, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, PartialOrd, Eq, Ord)]
 pub struct Address32(pub u32);
 
 impl Address for Address32 {
@@ -36,12 +36,12 @@ impl Address for Address32 {
 }
 
 /// 16-bit data record count
-#[derive(Debug, Hash, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, PartialOrd, Eq, Ord)]
 pub struct Count16(pub u16);
 
 // TODO: Restrict the value to 24 bits
 /// 24-bit data record count
-#[derive(Debug, Hash, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, PartialOrd, Eq, Ord)]
 pub struct Count24(pub u32);
 
 /// Record data field

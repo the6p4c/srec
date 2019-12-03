@@ -12,7 +12,7 @@ struct RawRecord {
 }
 
 /// Errors which may occur during reading
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, PartialOrd, Eq, Ord)]
 pub enum Error {
     /// String did not have enough characters
     NotEnoughData,

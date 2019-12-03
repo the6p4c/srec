@@ -1,7 +1,17 @@
 //! Parsing (reading) and generation (writing) of [Motorola
 //! S-record](https://en.wikipedia.org/wiki/SREC_\(file_format\)) (also known
 //! as SRECORD or SREC) files
-#![deny(missing_docs)]
+#![deny(
+    missing_docs,
+    missing_debug_implementations,
+    missing_copy_implementations,
+    trivial_casts,
+    trivial_numeric_casts,
+    unsafe_code,
+    unstable_features,
+    unused_import_braces,
+    unused_qualifications
+)]
 
 mod checksum;
 pub mod reader;
