@@ -12,6 +12,7 @@
     unused_import_braces,
     unused_qualifications
 )]
+#![warn(clippy::cargo)]
 
 mod checksum;
 pub mod reader;

@@ -1,6 +1,9 @@
 [package]
 name = "srec"
 version = "0.1.0"
+description = "Parsing and generating Motorola S-record (SRECORD/SREC) files"
+keywords = ["srec", "srecord", "motorola", "firmware"]
+categories = ["parser-implementations", "encoding"]
 authors = ["The6P4C <watsonjcampbell@gmail.com>"]
 repository = "https://github.com/The6P4C/srec.git"
 homepage = "https://github.com/The6P4C/srec"
