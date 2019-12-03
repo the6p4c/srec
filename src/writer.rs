@@ -3,7 +3,7 @@ use crate::checksum::checksum_of;
 use crate::record::*;
 
 fn make_record(t: u8, address: &impl Address, data: &[u8]) -> String {
-    assert!(t < 10);
+    assert!(t < 10, "invalid record type {}", t);
 
     let mut bytes = vec![0x00];
     bytes.extend(address.to_be_bytes());
