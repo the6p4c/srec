@@ -2,6 +2,11 @@
 name = "srec"
 version = "0.1.0"
 authors = ["The6P4C <watsonjcampbell@gmail.com>"]
+repository = "https://github.com/The6P4C/srec.git"
+homepage = "https://github.com/The6P4C/srec"
+license = "MIT"
+readme = "README.md"
+documentation = "https://docs.rs/srec"
 edition = "2018"
 
 [dependencies]
