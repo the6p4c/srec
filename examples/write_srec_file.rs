@@ -6,7 +6,7 @@ use std::io::Write;
 /// string
 fn main() -> Result<(), Box<dyn error::Error>> {
     let records = [
-        srec::Record::S0("HDR".to_string()),
+        srec::Record::S0("HDR".into()),
         srec::Record::S1(srec::Data {
             address: srec::Address16(0x1234),
             data: vec![0x00, 0x01, 0x02, 0x03],
@@ -18,7 +18,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         srec::Record::S9(srec::Address16(0x1234)),
     ];
 
-    let s = srec::writer::write_records(&records);
+    let s = srec::writer::generate_srec_file(&records);
 
     let mut file = fs::File::create("out.mot")?;
     file.write_all(&s.into_bytes())?;

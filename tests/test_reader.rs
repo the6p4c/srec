@@ -4,10 +4,7 @@ fn test_read_lf() {
 
     let mut records = srec::reader::read_records(&s);
 
-    assert_eq!(
-        records.next(),
-        Some(Ok(srec::Record::S0("HDR".to_string())))
-    );
+    assert_eq!(records.next(), Some(Ok(srec::Record::S0("HDR".into()))));
     assert_eq!(
         records.next(),
         Some(Ok(srec::Record::S1(srec::Data {
@@ -35,10 +32,7 @@ fn test_read_crlf() {
 
     let mut records = srec::reader::read_records(&s);
 
-    assert_eq!(
-        records.next(),
-        Some(Ok(srec::Record::S0("HDR".to_string())))
-    );
+    assert_eq!(records.next(), Some(Ok(srec::Record::S0("HDR".into()))));
     assert_eq!(
         records.next(),
         Some(Ok(srec::Record::S1(srec::Data {
@@ -66,10 +60,7 @@ fn test_read_lf_with_err() {
 
     let mut records = srec::reader::read_records(&s);
 
-    assert_eq!(
-        records.next(),
-        Some(Ok(srec::Record::S0("HDR".to_string())))
-    );
+    assert_eq!(records.next(), Some(Ok(srec::Record::S0("HDR".into()))));
     assert_eq!(
         records.next(),
         Some(Ok(srec::Record::S1(srec::Data {
@@ -97,10 +88,7 @@ fn test_read_crlf_with_err() {
 
     let mut records = srec::reader::read_records(&s);
 
-    assert_eq!(
-        records.next(),
-        Some(Ok(srec::Record::S0("HDR".to_string())))
-    );
+    assert_eq!(records.next(), Some(Ok(srec::Record::S0("HDR".into()))));
     assert_eq!(
         records.next(),
         Some(Ok(srec::Record::S1(srec::Data {

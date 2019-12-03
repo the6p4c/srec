@@ -35,16 +35,18 @@ impl Record {
     }
 }
 
-/// Generates a newline ("\n") terminated string from the records provided
+/// Converts each provided record to a string, joining them with newlines ('\n')
+/// to generate an LF terminated SREC file
 ///
-/// Does not validate that the provided records do not overlap or are
-/// duplicated.
+/// Does not perform any validation on the provided records. The caller is
+/// responsible for ensuring records do not contain duplicate/overlapping data
+/// and that records are in the correct order.
 ///
 /// # Examples
 ///
 /// ```rust
-/// let s = srec::writer::write_records(&[
-///     srec::Record::S0("HDR".to_string()),
+/// let s = srec::writer::generate_srec_file(&[
+///     srec::Record::S0("HDR".into()),
 ///     srec::Record::S1(srec::Data {
 ///         address: srec::Address16(0x1234),
 ///         data: vec![0x00, 0x01, 0x02, 0x03],
@@ -56,9 +58,12 @@ impl Record {
 ///     srec::Record::S9(srec::Address16(0x1234)),
 /// ]);
 ///
-/// println!("{}", s);
+/// assert_eq!(
+///     s,
+///     "S00600004844521B\nS107123400010203AC\nS10712380405060798\nS9031234B6\n"
+/// );
 /// ```
-pub fn write_records(records: &[Record]) -> String {
+pub fn generate_srec_file(records: &[Record]) -> String {
     records
         .iter()
         .map(Record::encode)
@@ -76,7 +81,7 @@ mod tests {
 
     #[test]
     fn encode_s0_empty_string_returns_empty_record() {
-        let r = Record::S0("".to_string());
+        let r = Record::S0("".into());
 
         let s = r.encode();
 
@@ -85,7 +90,7 @@ mod tests {
 
     #[test]
     fn encode_s0_simple_string_returns_correct_record() {
-        let r = Record::S0("HDR".to_string());
+        let r = Record::S0("HDR".into());
 
         let s = r.encode();
 
@@ -210,27 +215,27 @@ mod tests {
     }
 
     #[test]
-    fn write_records_empty_list_returns_empty_string() {
+    fn generate_srec_file_empty_list_returns_empty_string() {
         let r = [];
 
-        let s = write_records(&r);
+        let s = generate_srec_file(&r);
 
         assert_eq!(s, "");
     }
 
     #[test]
-    fn write_records_one_record_returns_single_record_newline_terminated() {
-        let r = [Record::S0("HDR".to_string())];
+    fn generate_srec_file_one_record_returns_single_record_newline_terminated() {
+        let r = [Record::S0("HDR".into())];
 
-        let s = write_records(&r);
+        let s = generate_srec_file(&r);
 
         assert_eq!(s, "S00600004844521B\n");
     }
 
     #[test]
-    fn write_records_multiple_records_returns_all_records_joined_by_newline() {
+    fn generate_srec_file_multiple_records_returns_all_records_joined_by_newline() {
         let r = [
-            Record::S0("HDR".to_string()),
+            Record::S0("HDR".into()),
             Record::S1(Data {
                 address: Address16(0x1234),
                 data: vec![0x00, 0x01, 0x02, 0x03],
@@ -242,7 +247,7 @@ mod tests {
             Record::S9(Address16(0x1234)),
         ];
 
-        let s = write_records(&r);
+        let s = generate_srec_file(&r);
 
         assert_eq!(
             s,

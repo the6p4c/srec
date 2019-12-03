@@ -122,7 +122,7 @@ impl FromStr for Record {
                 str::from_utf8(&rr.bytes[2..])
                     .expect("Invalid UTF-8 bytes in S0 data")
                     .trim_end_matches('\0')
-                    .to_string(),
+                    .into(),
             ),
             1 => {
                 if rr.bytes.len() < 2 {
@@ -373,7 +373,7 @@ mod tests {
 
         let r = s.parse::<Record>();
 
-        assert_eq!(r, Ok(Record::S0("".to_string())));
+        assert_eq!(r, Ok(Record::S0("".into())));
     }
 
     #[test]
@@ -382,7 +382,7 @@ mod tests {
 
         let r = s.parse::<Record>();
 
-        assert_eq!(r, Ok(Record::S0("HDR".to_string())));
+        assert_eq!(r, Ok(Record::S0("HDR".into())));
     }
 
     #[test]
@@ -391,7 +391,7 @@ mod tests {
 
         let r = s.parse::<Record>();
 
-        assert_eq!(r, Ok(Record::S0("HDR".to_string())));
+        assert_eq!(r, Ok(Record::S0("HDR".into())));
     }
 
     #[test]
@@ -625,7 +625,7 @@ mod tests {
 
         let mut ri = read_records(s);
 
-        assert_eq!(ri.next(), Some(Ok(Record::S0("HDR".to_string()))));
+        assert_eq!(ri.next(), Some(Ok(Record::S0("HDR".into()))));
         assert_eq!(ri.next(), None);
     }
 
@@ -635,7 +635,7 @@ mod tests {
 
         let mut ri = read_records(s);
 
-        assert_eq!(ri.next(), Some(Ok(Record::S0("HDR".to_string()))));
+        assert_eq!(ri.next(), Some(Ok(Record::S0("HDR".into()))));
         assert_eq!(ri.next(), None);
     }
 
@@ -645,7 +645,7 @@ mod tests {
 
         let mut ri = read_records(s);
 
-        assert_eq!(ri.next(), Some(Ok(Record::S0("HDR".to_string()))));
+        assert_eq!(ri.next(), Some(Ok(Record::S0("HDR".into()))));
         assert_eq!(ri.next(), None);
     }
 
@@ -655,7 +655,7 @@ mod tests {
 
         let mut ri = read_records(s);
 
-        assert_eq!(ri.next(), Some(Ok(Record::S0("HDR".to_string()))));
+        assert_eq!(ri.next(), Some(Ok(Record::S0("HDR".into()))));
         assert_eq!(
             ri.next(),
             Some(Ok(Record::S1(Data {
