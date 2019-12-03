@@ -6,6 +6,8 @@ A Rust crate for parsing/reading and generating/writing [Motorola S-record](http
 
 # Examples
 ## Reading
+See [`examples/read_srec_file.rs`](/examples/read_srec_file.rs)
+
 ```rust
 let s = fs::read_to_string(path)?;
 
@@ -17,6 +19,8 @@ for record in records {
 ```
 
 ## Writing
+See [`examples/write_srec_file.rs`](/examples/write_srec_file.rs)
+
 ```rust
 let records = [
 	srec::Record::S0("HDR".into()),
