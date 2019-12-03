@@ -8,6 +8,9 @@ fn make_record(t: u8, address: &impl Address, data: &[u8]) -> String {
     let mut bytes = vec![0x00];
     bytes.extend(address.to_be_bytes());
     bytes.extend(data);
+    // The length byte doesn't count itself, so subtract one for the length byte
+    // we saved space for when we created the bytes vec. Add one byte for the
+    // checksum that finishes the record.
     bytes[0] = (bytes.len() - 1 + 1) as u8;
 
     let bytes_str = bytes
