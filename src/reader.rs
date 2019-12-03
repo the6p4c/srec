@@ -41,73 +41,77 @@ impl fmt::Display for Error {
     }
 }
 
-// Using is_empty would ruin the consistency of checking if there are enough
-// characters between 1 and 2 required
-#[allow(clippy::len_zero)]
-fn raw_record_from_str(s: &str) -> Result<RawRecord, Error> {
-    // Read initial "S" character
-    if s.len() < 1 {
-        return Err(Error::NotEnoughData);
-    }
+impl FromStr for RawRecord {
+    type Err = Error;
 
-    let (first_char, s) = s.split_at(1);
+    // Using is_empty would ruin the consistency of checking if there are enough
+    // characters between 1 and 2 required
+    #[allow(clippy::len_zero)]
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        // Read initial "S" character
+        if s.len() < 1 {
+            return Err(Error::NotEnoughData);
+        }
 
-    if first_char != "S" {
-        return Err(Error::UnexpectedCharacter);
-    }
+        let (first_char, s) = s.split_at(1);
 
-    // Read type field
-    if s.len() < 1 {
-        return Err(Error::NotEnoughData);
-    }
+        if first_char != "S" {
+            return Err(Error::UnexpectedCharacter);
+        }
 
-    let (type_str, s) = s.split_at(1);
+        // Read type field
+        if s.len() < 1 {
+            return Err(Error::NotEnoughData);
+        }
 
-    let t = type_str
-        .parse::<u8>()
-        .map_err(|_| Error::UnexpectedCharacter)?;
+        let (type_str, s) = s.split_at(1);
 
-    // Read byte count field
-    if s.len() < 2 {
-        return Err(Error::NotEnoughData);
-    }
+        let t = type_str
+            .parse::<u8>()
+            .map_err(|_| Error::UnexpectedCharacter)?;
 
-    let (byte_count_str, s) = s.split_at(2);
-
-    let byte_count =
-        usize::from_str_radix(byte_count_str, 16).map_err(|_| Error::UnexpectedCharacter)?;
-
-    if byte_count == 0 {
-        return Err(Error::ByteCountZero);
-    }
-
-    // Read payload bytes (including checksum)
-    let mut bytes: Vec<u8> = Vec::with_capacity(byte_count);
-
-    let mut s = s;
-    for _ in 0..byte_count {
+        // Read byte count field
         if s.len() < 2 {
             return Err(Error::NotEnoughData);
         }
 
-        let (byte_str, s2) = s.split_at(2);
-        s = s2;
+        let (byte_count_str, s) = s.split_at(2);
 
-        bytes.push(u8::from_str_radix(byte_str, 16).map_err(|_| Error::UnexpectedCharacter)?);
-    }
+        let byte_count =
+            usize::from_str_radix(byte_count_str, 16).map_err(|_| Error::UnexpectedCharacter)?;
 
-    let checksum = bytes.pop().unwrap();
+        if byte_count == 0 {
+            return Err(Error::ByteCountZero);
+        }
 
-    // TODO: Calculate checksum without having to essentially clone the bytes, maybe make
-    // checksum_of take an iterator?
-    let mut checksum_bytes = vec![byte_count as u8];
-    checksum_bytes.extend(&bytes);
-    let checksum_valid = checksum == checksum_of(&checksum_bytes);
+        // Read payload bytes (including checksum)
+        let mut bytes: Vec<u8> = Vec::with_capacity(byte_count);
 
-    if checksum_valid {
-        Ok(RawRecord { t, bytes })
-    } else {
-        Err(Error::ChecksumMismatch)
+        let mut s = s;
+        for _ in 0..byte_count {
+            if s.len() < 2 {
+                return Err(Error::NotEnoughData);
+            }
+
+            let (byte_str, s2) = s.split_at(2);
+            s = s2;
+
+            bytes.push(u8::from_str_radix(byte_str, 16).map_err(|_| Error::UnexpectedCharacter)?);
+        }
+
+        let checksum = bytes.pop().unwrap();
+
+        // TODO: Calculate checksum without having to essentially clone the bytes, maybe make
+        // checksum_of take an iterator?
+        let mut checksum_bytes = vec![byte_count as u8];
+        checksum_bytes.extend(&bytes);
+        let checksum_valid = checksum == checksum_of(&checksum_bytes);
+
+        if checksum_valid {
+            Ok(RawRecord { t, bytes })
+        } else {
+            Err(Error::ChecksumMismatch)
+        }
     }
 }
 
@@ -115,7 +119,7 @@ impl FromStr for Record {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let rr = raw_record_from_str(s)?;
+        let rr = RawRecord::from_str(s)?;
 
         let r = match rr.t {
             0 => Record::S0(
@@ -266,7 +270,7 @@ mod tests {
     fn raw_record_from_str_empty_str_returns_err_not_enough_data() {
         let s = "";
 
-        let rr = raw_record_from_str(s);
+        let rr = RawRecord::from_str(s);
 
         assert_eq!(rr, Err(Error::NotEnoughData));
     }
@@ -275,7 +279,7 @@ mod tests {
     fn raw_record_from_str_first_character_invalid_returns_err_unexpected_character() {
         let s = "D";
 
-        let rr = raw_record_from_str(s);
+        let rr = RawRecord::from_str(s);
 
         assert_eq!(rr, Err(Error::UnexpectedCharacter));
     }
@@ -284,7 +288,7 @@ mod tests {
     fn raw_record_from_str_no_type_value_returns_err_not_enough_data() {
         let s = "S";
 
-        let rr = raw_record_from_str(s);
+        let rr = RawRecord::from_str(s);
 
         assert_eq!(rr, Err(Error::NotEnoughData));
     }
@@ -293,7 +297,7 @@ mod tests {
     fn raw_record_from_str_invalid_type_value_returns_err_unexpected_character() {
         let s = "Sx";
 
-        let rr = raw_record_from_str(s);
+        let rr = RawRecord::from_str(s);
 
         assert_eq!(rr, Err(Error::UnexpectedCharacter));
     }
@@ -302,7 +306,7 @@ mod tests {
     fn raw_record_from_str_byte_count_zero_returns_err_byte_count_zero() {
         let s = "S100";
 
-        let rr = raw_record_from_str(s);
+        let rr = RawRecord::from_str(s);
 
         assert_eq!(rr, Err(Error::ByteCountZero));
     }
@@ -311,7 +315,7 @@ mod tests {
     fn raw_record_from_str_invalid_hex_character_returns_err_unexpected_character() {
         let s = "S104123400xx";
 
-        let rr = raw_record_from_str(s);
+        let rr = RawRecord::from_str(s);
 
         assert_eq!(rr, Err(Error::UnexpectedCharacter));
     }
@@ -320,7 +324,7 @@ mod tests {
     fn raw_record_from_str_byte_count_too_large_returns_err_not_enough_data() {
         let s = "S1100000FFEF";
 
-        let rr = raw_record_from_str(s);
+        let rr = RawRecord::from_str(s);
 
         assert_eq!(rr, Err(Error::NotEnoughData));
     }
@@ -329,7 +333,7 @@ mod tests {
     fn raw_record_from_str_valid_record_empty_returns_ok_correct_raw_record() {
         let s = "S101FE";
 
-        let rr = raw_record_from_str(s);
+        let rr = RawRecord::from_str(s);
 
         assert_eq!(
             rr,
@@ -344,7 +348,7 @@ mod tests {
     fn raw_record_from_str_valid_record_valid_checksum_returns_ok_correct_raw_record() {
         let s = "S1101234000102030405060708090A0B0C5B";
 
-        let rr = raw_record_from_str(s);
+        let rr = RawRecord::from_str(s);
 
         assert_eq!(
             rr,
@@ -362,7 +366,7 @@ mod tests {
     fn raw_record_from_str_valid_record_invalid_checksum_returns_ok_correct_raw_record() {
         let s = "S1101234000102030405060708090A0B0CFF";
 
-        let rr = raw_record_from_str(s);
+        let rr = RawRecord::from_str(s);
 
         assert_eq!(rr, Err(Error::ChecksumMismatch));
     }
