@@ -1,5 +1,7 @@
 srec
 ====
+[![crates.io badge](https://img.shields.io/crates/v/srec)](https://crates.io/crates/srec)
+
 A Rust crate for parsing/reading and generating/writing [Motorola S-record](https://en.wikipedia.org/wiki/SREC_\(file_format\)) (also known as SRECORD or SREC) files.
 
 [View documentation on docs.rs](https://docs.rs/srec/)
