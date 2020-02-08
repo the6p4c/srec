@@ -45,7 +45,7 @@ pub struct Count16(pub u16);
 pub struct Count24(pub u32);
 
 /// Record data field
-#[derive(Debug, Hash, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, Clone, Hash, PartialEq, PartialOrd, Eq, Ord)]
 pub struct Data<T> {
     /// Start address
     pub address: T,
@@ -57,7 +57,7 @@ pub struct Data<T> {
 ///
 /// See [Wikipedia](https://en.wikipedia.org/wiki/SREC_(file_format)#Record_types)
 /// for specific record usage information.
-#[derive(Debug, Hash, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, Clone, Hash, PartialEq, PartialOrd, Eq, Ord)]
 pub enum Record {
     /// Header
     S0(String),
