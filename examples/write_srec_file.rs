@@ -18,7 +18,7 @@ fn main() -> Result<(), Box<dyn error::Error>> {
         srec::Record::S9(srec::Address16(0x1234)),
     ];
 
-    let s = srec::writer::generate_srec_file(&records);
+    let s = srec::generate_srec_file(&records);
 
     let mut file = fs::File::create("out.mot")?;
     file.write_all(&s.into_bytes())?;

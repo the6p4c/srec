@@ -19,4 +19,6 @@ pub mod reader;
 mod record;
 pub mod writer;
 
+pub use reader::{read_records, Error as ReaderError};
 pub use record::*;
+pub use writer::generate_srec_file;
