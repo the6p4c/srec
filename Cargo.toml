@@ -1,6 +1,6 @@
 [package]
 name = "srec"
-version = "0.1.2"
+version = "0.2.0"
 description = "Parsing and generating Motorola S-record (SRECORD/SREC) files"
 keywords = ["srec", "srecord", "motorola", "firmware"]
 categories = ["parser-implementations", "encoding"]
