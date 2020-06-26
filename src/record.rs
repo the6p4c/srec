@@ -14,6 +14,12 @@ impl Address for Address16 {
     }
 }
 
+impl From<Address16> for u32 {
+    fn from(addr: Address16) -> u32 {
+        addr.0 as u32
+    }
+}
+
 // TODO: Restrict the value to 24 bits
 /// 24-bit address
 #[derive(Debug, Copy, Clone, Hash, PartialEq, PartialOrd, Eq, Ord)]
@@ -22,6 +28,12 @@ pub struct Address24(pub u32);
 impl Address for Address24 {
     fn to_be_bytes(&self) -> Vec<u8> {
         self.0.to_be_bytes()[1..].to_vec()
+    }
+}
+
+impl From<Address24> for u32 {
+    fn from(addr: Address24) -> u32 {
+        addr.0
     }
 }
 
@@ -35,14 +47,32 @@ impl Address for Address32 {
     }
 }
 
+impl From<Address32> for u32 {
+    fn from(addr: Address32) -> u32 {
+        addr.0
+    }
+}
+
 /// 16-bit data record count
 #[derive(Debug, Copy, Clone, Hash, PartialEq, PartialOrd, Eq, Ord)]
 pub struct Count16(pub u16);
+
+impl From<Count16> for u32 {
+    fn from(count: Count16) -> u32 {
+        count.0 as u32
+    }
+}
 
 // TODO: Restrict the value to 24 bits
 /// 24-bit data record count
 #[derive(Debug, Copy, Clone, Hash, PartialEq, PartialOrd, Eq, Ord)]
 pub struct Count24(pub u32);
+
+impl From<Count24> for u32 {
+    fn from(count: Count24) -> u32 {
+        count.0
+    }
+}
 
 /// Record data field
 #[derive(Debug, Clone, Hash, PartialEq, PartialOrd, Eq, Ord)]
@@ -94,6 +124,15 @@ mod tests {
     }
 
     #[test]
+    fn address16_into_u32() {
+        let a = Address16(0x1234);
+
+        let b: u32 = a.into();
+
+        assert_eq!(b, 0x1234u32);
+    }
+
+    #[test]
     fn address24_to_be_bytes() {
         let a = Address24(0x123456);
 
@@ -103,11 +142,47 @@ mod tests {
     }
 
     #[test]
+    fn address24_into_u32() {
+        let a = Address24(0x123456);
+
+        let b: u32 = a.into();
+
+        assert_eq!(b, 0x123456u32);
+    }
+
+    #[test]
     fn address32_to_be_bytes() {
         let a = Address32(0x12345678);
 
         let b = a.to_be_bytes();
 
         assert_eq!(b, [0x12, 0x34, 0x56, 0x78]);
+    }
+
+    #[test]
+    fn address32_into_u32() {
+        let a = Address32(0x12345678);
+
+        let b: u32 = a.into();
+
+        assert_eq!(b, 0x12345678u32);
+    }
+
+    #[test]
+    fn count16_into_u32() {
+        let a = Count16(0x1234);
+
+        let b: u32 = a.into();
+
+        assert_eq!(b, 0x1234);
+    }
+
+    #[test]
+    fn count24_into_u32() {
+        let a = Count24(0x123456);
+
+        let b: u32 = a.into();
+
+        assert_eq!(b, 0x123456);
     }
 }
